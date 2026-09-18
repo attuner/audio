@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AcoustiQ Pro - Multi-Channel Audio Calibration Studio & Media Engine</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons for high-end audio UI icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            panel: {
+              950: '#07090e',
+              900: '#0b0e14',
+              850: '#0f141c',
+              800: '#141a24',
+              700: '#1e2638',
+              600: '#2b364e',
+            },
+            neon: {
+              cyan: '#00f0ff',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+              rose: '#f43f5e',
+              violet: '#a855f7'
+            }
+          },
+          boxShadow: {
+            'glow-cyan': '0 0 20px -2px rgba(0, 240, 255, 0.4)',
+            'glow-emerald': '0 0 20px -2px rgba(16, 185, 129, 0.4)',
+            'glow-amber': '0 0 20px -2px rgba(245, 158, 11, 0.4)',
+            'glow-rose': '0 0 20px -2px rgba(244, 63, 94, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #080a0f;
+      color: #e2e8f0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .bg-brushed-metal {
+      background: radial-gradient(circle at 50% 0%, #171f2e 0%, #0c1017 65%, #080a0f 100%);
+    }
+
+    /* Custom range sliders */
+    input[type=range] {
+      
+      background: #1e2638;
+      border-radius: 9999px;
+      height: 6px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #00f0ff;
+      cursor: pointer;
+      box-shadow: 0 0 8px #00f0ff;
+      border: 2px solid #0b0e14;
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #00f0ff;
+      cursor: pointer;
+      box-shadow: 0 0 8px #00f0ff;
+      border: 2px solid #0b0e14;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0e14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2b364e;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+    }
+
+    @keyframes sound-wave-pulse {
+      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.85; }
+      50% { opacity: 0.5; }
+      100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+    }
+    .sound-ripple {
+      animation: sound-wave-pulse 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+
+    .floor-grid {
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+
+    .drag-over {
+      border-color: #00f0ff !important;
+      background-color: rgba(0, 240, 255, 0.08) !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-brushed-metal font-sans antialiased text-slate-200 selection:bg-neon-cyan selection:text-black">
+
+  <!-- Top Audiophile Master Bar -->
+  <header class="border-b border-panel-700/80 bg-panel-900/95 backdrop-blur sticky top-0 z-40 px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 p-[2px] flex items-center justify-center shadow-glow-cyan">
+        <div class="w-full h-full bg-panel-900 rounded-[10px] flex items-center justify-center">
+          <i class="ph-bold ph-speaker-high text-neon-cyan text-xl"></i>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-base sm:text-lg font-bold tracking-wider text-white uppercase flex items-center gap-2">
+            AcoustiQ <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-neon-cyan font-mono border border-cyan-500/30">AVR-9000 PRO</span>
+          </h1>
+        </div>
+        <p class="text-xs text-slate-400 font-medium tracking-tight">Cinema & Studio Multi-Channel Acoustic Engine</p>
+      </div>
+    </div>
+
+    <!-- Mode Toggle: Test Generator vs Uploaded Media Player -->
+    <div class="flex items-center bg-panel-950 p-1 rounded-xl border border-panel-700">
+      <button id="modeTabTone" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition text-neon-cyan bg-panel-800 shadow-sm">
+        <i class="ph-bold ph-waveform"></i>
+        <span>Calibration Tones</span>
+      </button>
+      <button id="modeTabMedia" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition text-slate-400 hover:text-white">
+        <i class="ph-bold ph-music-notes"></i>
+        <span>Media Player / Upload</span>
+        <span class="w-2 h-2 rounded-full bg-neon-emerald"></span>
+      </button>
+    </div>
+
+    <!-- Master Audio Controls -->
+    <div class="flex items-center gap-2 sm:gap-4">
+      <div id="audioStatusBadge" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-panel-850 border border-panel-700 text-xs font-mono">
+        <span id="audioStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+        <span id="audioStatusText" class="text-slate-300">ENGINE: STANDBY</span>
+      </div>
+
+      <!-- Master Volume -->
+      <div class="flex items-center gap-2 bg-panel-850 px-3 py-1.5 rounded-xl border border-panel-700">
+        <button id="masterMuteBtn" title="Mute Master" class="p-1 text-slate-300 hover:text-neon-cyan transition">
+          <i id="masterMuteIcon" class="ph-bold ph-speaker-high text-base"></i>
+        </button>
+        <div class="flex flex-col w-20 sm:w-28">
+          <div class="flex justify-between text-[10px] font-mono text-slate-400">
+            <span>VOL</span>
+            <span id="masterVolDisplay" class="text-neon-cyan">80%</span>
+          </div>
+          <input type="range" id="masterVolumeSlider" min="0" max="100" value="80" class="w-full h-1 accent-cyan-400">
+        </div>
+      </div>
+
+      <!-- Sweep Tool Button -->
+      <button id="openSweepModalBtn" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-panel-800 hover:bg-panel-700 border border-panel-600 text-xs font-semibold text-slate-300 transition">
+        <i class="ph-bold ph-wave-sine text-neon-emerald"></i>
+        <span class="hidden md:inline">Acoustic Sweep</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-[1680px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- 1. CHANNEL CONFIGURATION SELECTOR BAR -->
+    <section class="bg-panel-850/90 border border-panel-700 rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-neon-cyan"></span>
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-200">Surround Topology Selection</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Select a channel layout to reconfigure routing, crossover, and speaker virtualization matrix.</p>
+        </div>
+
+        <!-- 2.0 to 5.1 Tabs -->
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2" id="channelConfigBtnGroup">
+          <button data-config="2.0" class="config-btn group flex flex-col items-center justify-center p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-cyan-400/60 transition">
+            <span class="text-xs font-mono font-bold text-slate-300 group-hover:text-neon-cyan">2.0</span>
+            <span class="text-[9px] text-slate-500 font-medium">Stereo</span>
+          </button>
+          <button data-config="2.1" class="config-btn group flex flex-col items-center justify-center p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-cyan-400/60 transition">
+            <span class="text-xs font-mono font-bold text-slate-300 group-hover:text-neon-cyan">2.1</span>
+            <span class="text-[9px] text-slate-500 font-medium">Stereo Sub</span>
+          </button>
+          <button data-config="3.0" class="config-btn group flex flex-col items-center justify-center p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-cyan-400/60 transition">
+            <span class="text-xs font-mono font-bold text-slate-300 group-hover:text-neon-cyan">3.0</span>
+            <span class="text-[9px] text-slate-500 font-medium">3-Front</span>
+          </button>
+          <button data-config="3.1" class="config-btn group flex flex-col items-center justify-center p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-cyan-400/60 transition">
+            <span class="text-xs font-mono font-bold text-slate-300 group-hover:text-neon-cyan">3.1</span>
+            <span class="text-[9px] text-slate-500 font-medium">3-Front+LFE</span>
+          </button>
+          <button data-config="4.0" class="config-btn group flex flex-col items-center justify-center p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-cyan-400/60 transition">
+            <span class="text-xs font-mono font-bold text-slate-300 group-hover:text-neon-cyan">4.0</span>
+            <span class="text-[9px] text-slate-500 font-medium">Quad</span>
+          </button>
+          <button data-config="4.1" class="config-btn group flex flex-col items-center justify-center p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-cyan-400/60 transition">
+            <span class="text-xs font-mono font-bold text-slate-300 group-hover:text-neon-cyan">4.1</span>
+            <span class="text-[9px] text-slate-500 font-medium">Quad+LFE</span>
+          </button>
+          <button data-config="5.0" class="config-btn group flex flex-col items-center justify-center p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-cyan-400/60 transition">
+            <span class="text-xs font-mono font-bold text-slate-300 group-hover:text-neon-cyan">5.0</span>
+            <span class="text-[9px] text-slate-500 font-medium">Surround</span>
+          </button>
+          <button data-config="5.1" class="config-btn active group flex flex-col items-center justify-center p-2 rounded-xl border-2 border-neon-cyan bg-cyan-950/40 text-neon-cyan shadow-glow-cyan transition">
+            <span class="text-xs font-mono font-bold">5.1</span>
+            <span class="text-[9px] text-cyan-300 font-medium">Cinema 5.1</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Channel Details Strip -->
+      <div class="mt-3 pt-3 border-t border-panel-700/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400">Topology:</span>
+          <span id="activeLayoutBadge" class="px-2.5 py-0.5 rounded-full bg-panel-700 text-neon-cyan font-mono font-semibold">5.1 Cinema Surround</span>
+          <span id="activeChannelCountBadge" class="text-slate-400 font-mono">(6 Discrete Channels Active)</span>
+        </div>
+
+        <!-- Speaker presence pills -->
+        <div class="flex items-center gap-1.5" id="channelIndicatorPills"></div>
+      </div>
+    </section>
+
+    <!-- 2. UPLOAD & MEDIA TEST CENTER (Visible in Media Player Mode) -->
+    <section id="mediaPlayerSection" class="hidden bg-panel-850/95 border border-cyan-500/30 rounded-2xl p-5 shadow-2xl space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-panel-700/70 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-neon-cyan/10 border border-neon-cyan/30 flex items-center justify-center text-neon-cyan">
+            <i class="ph-bold ph-music-notes-plus text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              Audio File Inspector & Surround Matrix Player
+              <span id="dspModeBadge" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-neon-emerald border border-emerald-500/30 font-mono">MATRIX UPMIX ACTIVE</span>
+            </h2>
+            <p class="text-xs text-slate-400">Inspect custom tracks, extract Center & Subwoofer stems, and test spatial immersion across speakers.</p>
+          </div>
+        </div>
+
+        <!-- Matrix Processing Mode Toggle -->
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400">DSP Mode:</span>
+          <div class="inline-flex rounded-lg bg-panel-900 p-0.5 border border-panel-700" id="dspToggleGroup">
+            <button id="btnDspUpmix" class="px-3 py-1 rounded-md text-xs font-mono font-semibold text-black bg-neon-cyan transition">Surround Matrix Upmix</button>
+            <button id="btnDspDirect" class="px-3 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-white transition">Direct Stereo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Upload Drag & Drop Area (lg:col-span-4) -->
+        <div class="lg:col-span-4 flex flex-col gap-3">
+          <div id="dropZone" class="flex-1 border-2 border-dashed border-panel-600 hover:border-cyan-400 bg-panel-900/80 rounded-xl p-5 flex flex-col items-center justify-center text-center transition cursor-pointer relative group min-h-[160px]">
+            <input type="file" id="audioFileInput" accept="audio/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" />
+            <i class="ph-bold ph-cloud-arrow-up text-3xl text-cyan-400 group-hover:scale-110 transition"></i>
+            <p class="text-xs font-semibold text-white mt-2">Click or Drag Audio File Here</p>
+            <p class="text-[11px] text-slate-400 mt-1">Supports MP3, WAV, FLAC, OGG, AAC/M4A</p>
+            <div class="flex gap-1 mt-2">
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-panel-800 text-slate-400 font-mono">MP3</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-panel-800 text-slate-400 font-mono">WAV</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-panel-800 text-slate-400 font-mono">FLAC</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-panel-800 text-slate-400 font-mono">OGG</span>
+            </div>
+          </div>
+
+          <!-- Bundled Test Tracks Selector -->
+          <div class="bg-panel-900/60 border border-panel-700 p-3 rounded-xl flex items-center justify-between">
+            <span class="text-xs text-slate-400">Quick Test Demos:</span>
+            <div class="flex gap-1.5">
+              <button class="demo-track-btn px-2.5 py-1 rounded-lg bg-panel-800 hover:bg-panel-700 text-slate-300 text-xs font-mono transition border border-panel-700" data-demo="trailer">Cinema Intro</button>
+              <button class="demo-track-btn px-2.5 py-1 rounded-lg bg-panel-800 hover:bg-panel-700 text-slate-300 text-xs font-mono transition border border-panel-700" data-demo="bass">Bass Drum Test</button>
+              <button class="demo-track-btn px-2.5 py-1 rounded-lg bg-panel-800 hover:bg-panel-700 text-slate-300 text-xs font-mono transition border border-panel-700" data-demo="spatial">Spatial Spin</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Waveform, Player & Metadata (lg:col-span-8) -->
+        <div class="lg:col-span-8 bg-panel-900/90 border border-panel-700 rounded-xl p-4 flex flex-col justify-between space-y-3">
+          
+          <!-- Track Info Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-panel-700/60 pb-2">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <i class="ph-bold ph-file-audio text-neon-cyan text-lg"></i>
+              <div class="truncate">
+                <span id="trackNameDisplay" class="text-xs font-bold text-white font-mono">Cinema Intro (Demo Multi-Tone)</span>
+                <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                  <span id="trackFormatDisplay">TYPE: SYNTH DEMO</span>
+                  <span>•</span>
+                  <span id="trackRateDisplay">SAMPLE RATE: 48000 Hz</span>
+                  <span>•</span>
+                  <span id="trackChannelsDisplay">CHANNELS: STEREO</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Time counter -->
+            <div class="font-mono text-xs text-neon-cyan bg-panel-950 px-2.5 py-1 rounded border border-panel-700">
+              <span id="timeCurrentDisplay">00:00</span> / <span id="timeTotalDisplay">00:15</span>
+            </div>
+          </div>
+
+          <!-- Interactive Waveform Canvas Container -->
+          <div class="relative w-full h-24 bg-panel-950 rounded-lg border border-panel-700/80 overflow-hidden cursor-pointer group" id="waveformContainer">
+            <canvas id="waveformCanvas" class="w-full h-full block"></canvas>
+            <!-- Seek scrubber line -->
+            <div id="scrubberLine" class="absolute top-0 bottom-0 w-[2px] bg-neon-cyan pointer-events-none left-0 shadow-glow-cyan hidden"></div>
+            <div class="absolute top-2 right-2 text-[9px] font-mono text-slate-500 group-hover:text-slate-300 transition pointer-events-none">CLICK TO SCRUB</div>
+          </div>
+
+          <!-- Player Controls Row -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <div class="flex items-center gap-2">
+              <button id="mediaPlayBtn" class="w-10 h-10 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold flex items-center justify-center shadow-glow-cyan transition active:scale-95">
+                <i id="mediaPlayIcon" class="ph-bold ph-play text-lg"></i>
+              </button>
+              <button id="mediaStopBtn" class="w-9 h-9 rounded-xl bg-panel-800 hover:bg-panel-700 border border-panel-600 text-slate-300 flex items-center justify-center transition">
+                <i class="ph-bold ph-stop text-base"></i>
+              </button>
+              <button id="mediaLoopBtn" class="px-2.5 py-1.5 rounded-lg bg-panel-800 hover:bg-panel-700 border border-panel-600 text-xs font-mono text-slate-400 hover:text-white transition flex items-center gap-1">
+                <i class="ph-bold ph-repeat"></i> Loop: <span id="loopStatusText">OFF</span>
+              </button>
+            </div>
+
+            <!-- Real-time extraction stems status -->
+            <div class="hidden sm:flex items-center gap-2 text-[10px] font-mono">
+              <span class="text-slate-400">Extraction Routing:</span>
+              <span class="px-2 py-0.5 rounded bg-panel-800 text-cyan-300 border border-panel-700">Center: Mids</span>
+              <span class="px-2 py-0.5 rounded bg-panel-800 text-amber-300 border border-panel-700">LFE: &lt;<span id="lfeCutoffTag">80</span>Hz</span>
+              <span class="px-2 py-0.5 rounded bg-panel-800 text-violet-300 border border-panel-700">Surrounds: Phase Amb</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MAIN WORKSPACE: Visualizer (Left) + Master Calibration & Channel Strips (Right) -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: TOP-DOWN STUDIO VISUALIZER & SPECTRUM (xl:col-span-7) -->
+      <div class="xl:col-span-7 flex flex-col gap-6">
+        
+        <!-- VISUALIZER CARD -->
+        <div class="bg-panel-850/90 border border-panel-700 rounded-2xl p-5 shadow-2xl relative overflow-hidden flex flex-col">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-panel-700/70 z-10">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-compass text-neon-cyan"></i>
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-white">Top-Down Soundstage Visualizer</h3>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="flex items-center gap-1 text-slate-400">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 inline-block"></span> Active
+              </span>
+              <span class="flex items-center gap-1 text-slate-500 ml-2">
+                <span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span> Disabled
+              </span>
+              <span class="text-[11px] font-mono text-cyan-400/80 bg-panel-800 px-2 py-0.5 rounded border border-panel-600">Click speaker to isolate/ping</span>
+            </div>
+          </div>
+
+          <!-- Top-down Room Soundstage Canvas Area -->
+          <div id="roomContainer" class="relative w-full h-[460px] sm:h-[490px] my-4 rounded-xl bg-panel-900 border border-panel-700/80 floor-grid overflow-hidden flex items-center justify-center">
+            
+            <!-- Reference TV / Screen at front -->
+            <div class="absolute top-3 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-3.5 bg-gradient-to-r from-panel-700 via-cyan-500/40 to-panel-700 rounded-full border border-cyan-500/30 flex items-center justify-center">
+              <span class="text-[8px] font-mono tracking-widest uppercase text-cyan-300">Front Display / Screen (0°)</span>
+            </div>
+
+            <!-- Distance Range Circles -->
+            <div class="absolute w-80 h-80 rounded-full border border-dashed border-slate-700/40 pointer-events-none"></div>
+            <div class="absolute w-[440px] h-[440px] rounded-full border border-dashed border-slate-800/60 pointer-events-none"></div>
+
+            <!-- SPEAKERS -->
+            <!-- 1. Front Left (FL) -->
+            <div id="spk-fl" class="speaker-node absolute top-[60px] left-[18%] -translate-x-1/2 cursor-pointer transition-all duration-300 group" data-spk="fl">
+              <div class="sound-wave-anchor absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 pointer-events-none hidden">
+                <div class="w-full h-full rounded-full border-2 border-cyan-400 sound-ripple"></div>
+              </div>
+              <div class="spk-box flex flex-col items-center bg-panel-800 border-2 border-panel-600 group-hover:border-cyan-400 p-2.5 rounded-xl shadow-lg transition duration-200">
+                <i class="ph-bold ph-speaker-simple-high text-2xl text-slate-300 group-hover:text-neon-cyan"></i>
+                <span class="text-[10px] font-mono font-bold mt-1 text-slate-200">FL</span>
+                <span class="text-[8px] text-slate-400 font-mono">Front Left</span>
+              </div>
+            </div>
+
+            <!-- 2. Center (C) -->
+            <div id="spk-c" class="speaker-node absolute top-[45px] left-1/2 -translate-x-1/2 cursor-pointer transition-all duration-300 group" data-spk="c">
+              <div class="sound-wave-anchor absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 pointer-events-none hidden">
+                <div class="w-full h-full rounded-full border-2 border-cyan-400 sound-ripple"></div>
+              </div>
+              <div class="spk-box flex flex-col items-center bg-panel-800 border-2 border-panel-600 group-hover:border-cyan-400 p-2.5 rounded-xl shadow-lg transition duration-200">
+                <i class="ph-bold ph-speaker-simple-high text-2xl text-slate-300 group-hover:text-neon-cyan"></i>
+                <span class="text-[10px] font-mono font-bold mt-1 text-slate-200">C</span>
+                <span class="text-[8px] text-slate-400 font-mono">Center</span>
+              </div>
+            </div>
+
+            <!-- 3. Front Right (FR) -->
+            <div id="spk-fr" class="speaker-node absolute top-[60px] right-[18%] translate-x-1/2 cursor-pointer transition-all duration-300 group" data-spk="fr">
+              <div class="sound-wave-anchor absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 pointer-events-none hidden">
+                <div class="w-full h-full rounded-full border-2 border-cyan-400 sound-ripple"></div>
+              </div>
+              <div class="spk-box flex flex-col items-center bg-panel-800 border-2 border-panel-600 group-hover:border-cyan-400 p-2.5 rounded-xl shadow-lg transition duration-200">
+                <i class="ph-bold ph-speaker-simple-high text-2xl text-slate-300 group-hover:text-neon-cyan"></i>
+                <span class="text-[10px] font-mono font-bold mt-1 text-slate-200">FR</span>
+                <span class="text-[8px] text-slate-400 font-mono">Front Right</span>
+              </div>
+            </div>
+
+            <!-- 4. Subwoofer / LFE (SUB) -->
+            <div id="spk-sub" class="speaker-node absolute top-[135px] left-[32%] -translate-x-1/2 cursor-pointer transition-all duration-300 group" data-spk="sub">
+              <div class="sound-wave-anchor absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 pointer-events-none hidden">
+                <div class="w-full h-full rounded-full border-2 border-amber-400 sound-ripple"></div>
+              </div>
+              <div class="spk-box flex flex-col items-center bg-panel-800 border-2 border-panel-600 group-hover:border-amber-400 p-2.5 rounded-xl shadow-lg transition duration-200">
+                <i class="ph-bold ph-disc text-2xl text-amber-400 group-hover:text-amber-300"></i>
+                <span class="text-[10px] font-mono font-bold mt-1 text-amber-300">SUB</span>
+                <span class="text-[8px] text-slate-400 font-mono">LFE 0.1</span>
+              </div>
+            </div>
+
+            <!-- 5. Surround Left (SL) -->
+            <div id="spk-sl" class="speaker-node absolute bottom-[90px] left-[14%] -translate-x-1/2 cursor-pointer transition-all duration-300 group" data-spk="sl">
+              <div class="sound-wave-anchor absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 pointer-events-none hidden">
+                <div class="w-full h-full rounded-full border-2 border-cyan-400 sound-ripple"></div>
+              </div>
+              <div class="spk-box flex flex-col items-center bg-panel-800 border-2 border-panel-600 group-hover:border-cyan-400 p-2.5 rounded-xl shadow-lg transition duration-200">
+                <i class="ph-bold ph-speaker-simple-high text-2xl text-slate-300 group-hover:text-neon-cyan"></i>
+                <span class="text-[10px] font-mono font-bold mt-1 text-slate-200">SL</span>
+                <span class="text-[8px] text-slate-400 font-mono">Surround L</span>
+              </div>
+            </div>
+
+            <!-- 6. Surround Right (SR) -->
+            <div id="spk-sr" class="speaker-node absolute bottom-[90px] right-[14%] translate-x-1/2 cursor-pointer transition-all duration-300 group" data-spk="sr">
+              <div class="sound-wave-anchor absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 pointer-events-none hidden">
+                <div class="w-full h-full rounded-full border-2 border-cyan-400 sound-ripple"></div>
+              </div>
+              <div class="spk-box flex flex-col items-center bg-panel-800 border-2 border-panel-600 group-hover:border-cyan-400 p-2.5 rounded-xl shadow-lg transition duration-200">
+                <i class="ph-bold ph-speaker-simple-high text-2xl text-slate-300 group-hover:text-neon-cyan"></i>
+                <span class="text-[10px] font-mono font-bold mt-1 text-slate-200">SR</span>
+                <span class="text-[8px] text-slate-400 font-mono">Surround R</span>
+              </div>
+            </div>
+
+            <!-- SWEET SPOT / LISTENER POSITION -->
+            <div class="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none">
+              <div class="w-24 h-12 rounded-xl bg-panel-800 border-2 border-cyan-500/50 shadow-glow-cyan flex items-center justify-center relative">
+                <div class="w-20 h-7 rounded-lg bg-panel-700/80 flex items-center justify-center gap-1">
+                  <div class="w-5 h-5 rounded-md bg-panel-600/70 border border-cyan-400/30"></div>
+                  <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-400 to-emerald-400 border-2 border-white shadow-md flex items-center justify-center">
+                    <i class="ph-bold ph-ear text-[11px] text-slate-950"></i>
+                  </div>
+                  <div class="w-5 h-5 rounded-md bg-panel-600/70 border border-cyan-400/30"></div>
+                </div>
+              </div>
+              <span class="mt-2 text-[10px] font-mono font-semibold tracking-wider text-neon-cyan uppercase bg-panel-900/90 px-2.5 py-0.5 rounded-full border border-cyan-500/30">Sweet Spot</span>
+            </div>
+
+            <!-- Real-time HUD Status -->
+            <div class="absolute bottom-3 left-3 bg-panel-900/90 backdrop-blur border border-panel-700 p-2.5 rounded-xl flex items-center gap-3">
+              <div class="flex flex-col">
+                <span class="text-[9px] text-slate-400 font-mono uppercase">Soundstage Signal</span>
+                <span id="activeSignalLabel" class="text-xs font-mono font-bold text-white">IDLE / SILENT</span>
+              </div>
+              <div id="visualizerPulsingIcon" class="w-6 h-6 rounded-full bg-panel-800 border border-panel-600 flex items-center justify-center text-slate-400">
+                <i class="ph-bold ph-waveform"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Visualizer Quick Actions (Calibration Mode) -->
+          <div id="toneControlsStrip" class="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400">Audio Test Type:</span>
+              <div class="inline-flex rounded-lg bg-panel-800 p-0.5 border border-panel-700" id="testToneSelector">
+                <button data-tone="pink" class="tone-btn active px-2.5 py-1 rounded-md text-xs font-mono font-medium text-black bg-neon-cyan">Pink Noise</button>
+                <button data-tone="1khz" class="tone-btn px-2.5 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-white">1 kHz Sine</button>
+                <button data-tone="pulse" class="tone-btn px-2.5 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-white">Blip Pulse</button>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="seqTestBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-xs uppercase tracking-wider transition">
+                <i class="ph-bold ph-play-circle text-sm"></i>
+                <span id="seqBtnText">Cycle All</span>
+              </button>
+              <button id="stopAllAudioBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 transition">
+                <i class="ph-bold ph-stop"></i> Stop
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- REAL-TIME FFT SPECTRUM & ACOUSTIC PROFILES -->
+        <div class="bg-panel-850/90 border border-panel-700 rounded-2xl p-5 shadow-2xl">
+          <div class="flex items-center justify-between pb-3 border-b border-panel-700">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-chart-bar text-neon-emerald"></i>
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-white">Live Spectrum Analyzer (FFT)</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="exportProfileBtn" class="text-xs font-mono text-slate-300 hover:text-neon-cyan px-2 py-1 rounded bg-panel-800 border border-panel-700 flex items-center gap-1">
+                <i class="ph-bold ph-export"></i> Export JSON
+              </button>
+              <button id="resetDefaultsBtn" class="text-xs font-mono text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-panel-800 border border-panel-700 flex items-center gap-1">
+                <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Canvas for Spectrum FFT -->
+          <div class="mt-3 w-full h-24 bg-panel-950 rounded-xl border border-panel-700 p-1 relative overflow-hidden">
+            <canvas id="liveFftCanvas" class="w-full h-full block rounded-lg"></canvas>
+            <div class="absolute bottom-1 left-3 text-[8px] font-mono text-slate-500">20Hz</div>
+            <div class="absolute bottom-1 left-1/3 text-[8px] font-mono text-slate-500">250Hz</div>
+            <div class="absolute bottom-1 left-2/3 text-[8px] font-mono text-slate-500">4kHz</div>
+            <div class="absolute bottom-1 right-3 text-[8px] font-mono text-slate-500">20kHz</div>
+          </div>
+
+          <!-- Presets -->
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mt-4" id="presetButtonGroup">
+            <button data-preset="cinema" class="preset-btn active p-2 rounded-xl border-2 border-emerald-400 bg-emerald-950/30 text-emerald-300 text-left transition">
+              <div class="font-bold text-xs font-mono">Cinema Ref</div>
+              <div class="text-[10px] text-slate-400">THX 80Hz Cutoff</div>
+            </button>
+            <button data-preset="studio" class="preset-btn p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-slate-400 text-left transition">
+              <div class="font-bold text-xs font-mono text-slate-200">Studio Flat</div>
+              <div class="text-[10px] text-slate-400">0dB Pure Neutral</div>
+            </button>
+            <button data-preset="bass" class="preset-btn p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-slate-400 text-left transition">
+              <div class="font-bold text-xs font-mono text-slate-200">Bass Boost</div>
+              <div class="text-[10px] text-slate-400">+4.5dB LFE Slam</div>
+            </button>
+            <button data-preset="dialogue" class="preset-btn p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-slate-400 text-left transition">
+              <div class="font-bold text-xs font-mono text-slate-200">Dialogue Clear</div>
+              <div class="text-[10px] text-slate-400">+3dB Center Clarity</div>
+            </button>
+            <button data-preset="night" class="preset-btn p-2 rounded-xl border border-panel-600 bg-panel-800 hover:border-slate-400 text-left transition col-span-2 sm:col-span-1">
+              <div class="font-bold text-xs font-mono text-slate-200">Night Mode</div>
+              <div class="text-[10px] text-slate-400">Low Sub & Quiet</div>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: MASTER CROSSOVER + INDIVIDUAL SPEAKER CALIBRATION STRIPS (xl:col-span-5) -->
+      <div class="xl:col-span-5 flex flex-col gap-6">
+
+        <!-- GLOBAL BASS MANAGEMENT & CROSSOVER -->
+        <div class="bg-panel-850/90 border border-panel-700 rounded-2xl p-5 shadow-2xl">
+          <div class="flex items-center justify-between pb-3 border-b border-panel-700">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-faders text-neon-amber"></i>
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-white">Bass Management & Crossover</h3>
+            </div>
+            <span id="crossoverStatusTag" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-neon-amber border border-amber-500/30">SUB ACTIVE</span>
+          </div>
+
+          <div class="mt-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs font-medium text-slate-200">Subwoofer Low Pass Filter (LPF for LFE)</div>
+                <div class="text-[11px] text-slate-400">Frequencies below cutoff route directly to the subwoofer.</div>
+              </div>
+              <div class="text-right">
+                <span id="crossoverFreqDisplay" class="text-base font-mono font-bold text-neon-amber">80 Hz</span>
+                <div class="text-[9px] text-slate-400 font-mono">THX TARGET</div>
+              </div>
+            </div>
+
+            <!-- Crossover Freq Selector Tabs -->
+            <div class="grid grid-cols-5 gap-1.5" id="crossoverButtonGroup">
+              <button data-cutoff="40" class="crossover-btn p-1.5 rounded-lg border border-panel-600 bg-panel-800 text-xs font-mono hover:border-amber-400 text-slate-300">40Hz</button>
+              <button data-cutoff="60" class="crossover-btn p-1.5 rounded-lg border border-panel-600 bg-panel-800 text-xs font-mono hover:border-amber-400 text-slate-300">60Hz</button>
+              <button data-cutoff="80" class="crossover-btn active p-1.5 rounded-lg border-2 border-amber-400 bg-amber-950/40 text-xs font-mono font-bold text-neon-amber shadow-glow-amber">80Hz</button>
+              <button data-cutoff="100" class="crossover-btn p-1.5 rounded-lg border border-panel-600 bg-panel-800 text-xs font-mono hover:border-amber-400 text-slate-300">100Hz</button>
+              <button data-cutoff="120" class="crossover-btn p-1.5 rounded-lg border border-panel-600 bg-panel-800 text-xs font-mono hover:border-amber-400 text-slate-300">120Hz</button>
+            </div>
+
+            <!-- Room Unit Measurement Toggle -->
+            <div class="flex items-center justify-between pt-2 border-t border-panel-700/60 text-xs">
+              <span class="text-slate-400">Distance Unit Metric:</span>
+              <div class="inline-flex rounded-lg bg-panel-800 p-0.5 border border-panel-700" id="unitSelector">
+                <button data-unit="meters" class="unit-btn active px-2.5 py-0.5 rounded text-xs font-mono text-neon-cyan bg-panel-700 font-semibold">Meters (m)</button>
+                <button data-unit="feet" class="unit-btn px-2.5 py-0.5 rounded text-xs font-mono text-slate-400 hover:text-white">Feet (ft)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PER-SPEAKER CALIBRATION STRIPS -->
+        <div class="bg-panel-850/90 border border-panel-700 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-panel-700">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-equalizer text-neon-cyan"></i>
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-white">Channel Trim, Meters & DSP Matrix</h3>
+            </div>
+            <span class="text-[10px] font-mono text-slate-400">Live DSP Routing</span>
+          </div>
+
+          <!-- Speakers Accordion / Strip List -->
+          <div id="speakerStripsContainer" class="mt-4 space-y-3 overflow-y-auto max-h-[580px] pr-1"></div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ACOUSTIC ROOM CALIBRATION SWEEP MODAL -->
+  <div id="sweepModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+    <div class="bg-panel-900 border border-cyan-500/40 rounded-2xl max-w-2xl w-full p-6 shadow-glow-cyan space-y-5">
+      <div class="flex items-center justify-between border-b border-panel-700 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center">
+            <i class="ph-bold ph-wave-sine text-neon-cyan text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white uppercase tracking-wider">Acoustic Room Sweep Analyzer</h3>
+            <p class="text-xs text-slate-400">Logarithmic 20Hz - 20kHz Sine Chirp Room Response</p>
+          </div>
+        </div>
+        <button id="closeSweepModalBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-panel-800">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Frequency Response Graph Canvas -->
+      <div class="space-y-2">
+        <div class="flex justify-between text-xs font-mono text-slate-400">
+          <span>FREQUENCY RESPONSE CURVE</span>
+          <span id="sweepFreqReadout" class="text-neon-cyan">IDLE</span>
+        </div>
+        <div class="w-full h-44 bg-panel-850 rounded-xl border border-panel-700 p-2 relative">
+          <canvas id="sweepCanvas" class="w-full h-full block rounded-lg"></canvas>
+          <div class="absolute bottom-3 left-4 text-[9px] font-mono text-slate-500">20Hz</div>
+          <div class="absolute bottom-3 left-1/4 text-[9px] font-mono text-slate-500">200Hz</div>
+          <div class="absolute bottom-3 left-1/2 text-[9px] font-mono text-slate-500">1kHz</div>
+          <div class="absolute bottom-3 left-3/4 text-[9px] font-mono text-slate-500">5kHz</div>
+          <div class="absolute bottom-3 right-4 text-[9px] font-mono text-slate-500">20kHz</div>
+        </div>
+      </div>
+
+      <!-- Sweep Controls -->
+      <div class="bg-panel-850 p-4 rounded-xl border border-panel-700 flex flex-wrap items-center justify-between gap-4">
+        <div class="text-xs text-slate-300">
+          <div class="font-semibold text-white">Automatic Room EQ Simulation</div>
+          <div class="text-[11px] text-slate-400">Calculates boundary gain compensations and crossover phase.</div>
+        </div>
+        <button id="startSweepAudioBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-glow-emerald flex items-center gap-2">
+          <i class="ph-bold ph-play"></i> Run 5-Second Sweep
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* -------------------------------------------------------------
+       AUDIO CONSTANTS & TOPOLOGY MATRIX
+       ------------------------------------------------------------- */
+    const CHANNEL_SPECS = {
+      '2.0': { name: '2.0 Stereo', channels: ['fl', 'fr'], sub: false, desc: 'Left & Right Full Range' },
+      '2.1': { name: '2.1 Stereo Sub', channels: ['fl', 'fr', 'sub'], sub: true, desc: 'Left, Right + Subwoofer' },
+      '3.0': { name: '3.0 3-Channel Front', channels: ['fl', 'c', 'fr'], sub: false, desc: 'Left, Center, Right' },
+      '3.1': { name: '3.1 Front + Sub', channels: ['fl', 'c', 'fr', 'sub'], sub: true, desc: 'Left, Center, Right + Subwoofer' },
+      '4.0': { name: '4.0 Quadraphonic', channels: ['fl', 'fr', 'sl', 'sr'], sub: false, desc: 'Front Stereo + Surround Stereo' },
+      '4.1': { name: '4.1 Quad + Sub', channels: ['fl', 'fr', 'sl', 'sr', 'sub'], sub: true, desc: 'Front Stereo + Surround + Subwoofer' },
+      '5.0': { name: '5.0 Surround Sound', channels: ['fl', 'c', 'fr', 'sl', 'sr'], sub: false, desc: 'Fronts, Center & Surrounds' },
+      '5.1': { name: '5.1 Cinema Surround', channels: ['fl', 'c', 'fr', 'sub', 'sl', 'sr'], sub: true, desc: 'Full 5.1 Discrete Cinema Surround' }
+    };
+
+    const ALL_SPEAKERS = {
+      fl: { id: 'fl', label: 'FL', fullName: 'Front Left', pan: -0.9, freq: 1000, defaultDist: 2.8, trim: 0.0, mute: false, solo: false },
+      c:  { id: 'c',  label: 'C',  fullName: 'Center Channel', pan: 0.0,  freq: 1000, defaultDist: 2.5, trim: 0.0, mute: false, solo: false },
+      fr: { id: 'fr', label: 'FR', fullName: 'Front Right', pan: 0.9,  freq: 1000, defaultDist: 2.8, trim: 0.0, mute: false, solo: false },
+      sub:{ id: 'sub',label: 'SUB',fullName: 'Subwoofer (LFE)', pan: 0.0, freq: 50,   defaultDist: 3.2, trim: 0.0, mute: false, solo: false },
+      sl: { id: 'sl', label: 'SL', fullName: 'Surround Left', pan: -0.85, freq: 1000, defaultDist: 2.0, trim: 0.0, mute: false, solo: false },
+      sr: { id: 'sr', label: 'SR', fullName: 'Surround Right', pan: 0.85, freq: 1000, defaultDist: 2.0, trim: 0.0, mute: false, solo: false }
+    };
+
+    // State container
+    const state = {
+      mode: 'tone', // 'tone' or 'media'
+      currentConfig: '5.1',
+      masterVolume: 0.8,
+      masterMute: false,
+      crossoverCutoff: 80, // Hz
+      distanceUnit: 'meters',
+      selectedToneType: 'pink',
+      activePreset: 'cinema',
+      isPlayingSequence: false,
+      sequenceInterval: null,
+      activeTestSpeaker: null,
+      speakers: JSON.parse(JSON.stringify(ALL_SPEAKERS)),
+      // Media player state
+      dspUpmix: true,
+      audioBuffer: null,
+      audioSourceNode: null,
+      isPlayingMedia: false,
+      mediaStartTime: 0,
+      mediaPauseOffset: 0,
+      isLoopingMedia: false,
+      currentTrackTitle: 'Cinema Intro (Demo Multi-Tone)',
+      currentTrackMeta: { format: 'SYNTH DEMO', rate: 48000, channels: 2 }
+    };
+
+    /* -------------------------------------------------------------
+       WEB AUDIO CONTEXT & DSP MATRIX ARCHITECTURE
+       ------------------------------------------------------------- */
+    let audioCtx = null;
+    let masterGainNode = null;
+    let noiseBufferCache = null;
+    let activeOscillators = [];
+    let dspNodes = {}; // channel-specific DSP gain, filter, delay, analyzer nodes
+    let masterAnalyzer = null;
+    let vuAnimFrameId = null;
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+
+        // Master Gain
+        masterGainNode = audioCtx.createGain();
+        masterGainNode.gain.setValueAtTime(state.masterMute ? 0 : state.masterVolume, audioCtx.currentTime);
+
+        // Master Analyzer (FFT)
+        masterAnalyzer = audioCtx.createAnalyser();
+        masterAnalyzer.fftSize = 256;
+        masterAnalyzer.smoothingTimeConstant = 0.85;
+
+        masterGainNode.connect(masterAnalyzer);
+        masterAnalyzer.connect(audioCtx.destination);
+
+        // Pre-create Pink Noise buffer
+        generatePinkNoiseBuffer();
+
+        // Build DSP Channel routing matrix nodes
+        setupChannelDSPMatrix();
+
+        // Update UI Indicator
+        document.getElementById('audioStatusDot').classList.remove('bg-amber-400');
+        document.getElementById('audioStatusDot').classList.add('bg-neon-emerald');
+        document.getElementById('audioStatusText').textContent = 'ENGINE: ACTIVE';
+
+        // Start continuous VU and FFT render loop
+        startContinuousVisualizers();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Set up per-channel Web Audio nodes for routing, delay, trim, and metering
+    function setupChannelDSPMatrix() {
+      dspNodes = {};
+
+      Object.keys(ALL_SPEAKERS).forEach(id => {
+        const spk = state.speakers[id];
+        const gainNode = audioCtx.createGain();
+        const delayNode = audioCtx.createDelay(1.0);
+        const analyzerNode = audioCtx.createAnalyser();
+        analyzerNode.fftSize = 64;
+
+        // Calculate initial delay
+        const delayTime = spk.defaultDist / 343; // seconds
+        delayNode.delayTime.setValueAtTime(delayTime, audioCtx.currentTime);
+
+        // Initial gain from trim
+        const linGain = Math.pow(10, spk.trim / 20);
+        gainNode.gain.setValueAtTime(linGain, audioCtx.currentTime);
+
+        // Stereo Panning simulation if supported
+        let panner = null;
+        if (audioCtx.createStereoPanner) {
+          panner = audioCtx.createStereoPanner();
+          panner.pan.setValueAtTime(spk.pan, audioCtx.currentTime);
+        }
+
+        // Connect chain: source -> gain -> delay -> analyzer -> panner -> masterGain
+        gainNode.connect(delayNode);
+        delayNode.connect(analyzerNode);
+
+        if (panner) {
+          analyzerNode.connect(panner);
+          panner.connect(masterGainNode);
+        } else {
+          analyzerNode.connect(masterGainNode);
+        }
+
+        dspNodes[id] = {
+          gain: gainNode,
+          delay: delayNode,
+          analyzer: analyzerNode,
+          panner: panner
+        };
+      });
+    }
+
+    function updateChannelGainsAndMutes() {
+      if (!audioCtx) return;
+      const activeChannels = CHANNEL_SPECS[state.currentConfig].channels;
+      const anySolo = Object.values(state.speakers).some(s => s.solo);
+
+      Object.keys(ALL_SPEAKERS).forEach(id => {
+        const spk = state.speakers[id];
+        const dsp = dspNodes[id];
+        if (!dsp) return;
+
+        const isActiveInConfig = activeChannels.includes(id);
+        const isMuted = spk.mute || (anySolo && !spk.solo) || !isActiveInConfig;
+
+        const targetGain = isMuted ? 0 : Math.pow(10, spk.trim / 20);
+        dsp.gain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.04);
+
+        // Update delay based on physical distance
+        const delaySec = Math.max(0, spk.defaultDist / 343);
+        dsp.delay.delayTime.setTargetAtTime(delaySec, audioCtx.currentTime, 0.04);
+      });
+    }
+
+    function generatePinkNoiseBuffer() {
+      const bufferSize = audioCtx.sampleRate * 3;
+      noiseBufferCache = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBufferCache.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        b6 = white * 0.115926;
+      }
+    }
+
+    /* -------------------------------------------------------------
+       AUDIO FILE INSPECTION, DECODING & PLAYBACK ENGINE
+       ------------------------------------------------------------- */
+    const fileInput = document.getElementById('audioFileInput');
+    const dropZone = document.getElementById('dropZone');
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleAudioFile(file);
+    });
+
+    // Drag & Drop Listeners
+    ['dragenter', 'dragover'].forEach(name => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        handleAudioFile(files[0]);
+      }
+    });
+
+    function handleAudioFile(file) {
+      initAudioContext();
+      stopMediaPlayback();
+
+      state.currentTrackTitle = file.name;
+      document.getElementById('trackNameDisplay').textContent = file.name;
+
+      const extension = file.name.split('.').pop().toUpperCase() || 'AUDIO';
+      document.getElementById('trackFormatDisplay').textContent = `TYPE: ${extension}`;
+
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const arrayBuffer = ev.target.result;
+        audioCtx.decodeAudioData(arrayBuffer, (decodedBuffer) => {
+          state.audioBuffer = decodedBuffer;
+          state.mediaPauseOffset = 0;
+
+          // Update metadata UI
+          const duration = decodedBuffer.duration;
+          state.currentTrackMeta = {
+            format: extension,
+            rate: decodedBuffer.sampleRate,
+            channels: decodedBuffer.numberOfChannels
+          };
+
+          document.getElementById('trackRateDisplay').textContent = `SAMPLE RATE: ${decodedBuffer.sampleRate} Hz`;
+          document.getElementById('trackChannelsDisplay').textContent = `CHANNELS: ${decodedBuffer.numberOfChannels === 1 ? 'MONO' : decodedBuffer.numberOfChannels === 2 ? 'STEREO' : decodedBuffer.numberOfChannels + ' DISCRETE'}`;
+          document.getElementById('timeTotalDisplay').textContent = formatTime(duration);
+          document.getElementById('timeCurrentDisplay').textContent = '00:00';
+
+          // Draw visual waveform
+          drawWaveform(decodedBuffer);
+
+          // Auto-start playback
+          playMediaTrack();
+        }, (err) => {
+          alert("Error decoding audio file. Please try a standard MP3, WAV, FLAC, or OGG.");
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Bundled Dynamic Demo Synthesizers
+    document.querySelectorAll('.demo-track-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const demoType = e.currentTarget.getAttribute('data-demo');
+        generateBundledDemoTrack(demoType);
+      });
+    });
+
+    function generateBundledDemoTrack(type) {
+      initAudioContext();
+      stopMediaPlayback();
+
+      const sampleRate = audioCtx.sampleRate;
+      let duration = 12;
+      let numChannels = 2;
+
+      if (type === 'trailer') {
+        duration = 14;
+        state.currentTrackTitle = "Cinema Trailer Intro (Acoustic Demo)";
+      } else if (type === 'bass') {
+        duration = 10;
+        state.currentTrackTitle = "Bass Drum & Sub Sweep (LFE Demo)";
+      } else {
+        duration = 12;
+        state.currentTrackTitle = "Spatial Surround 360 Spin (Demo)";
+      }
+
+      document.getElementById('trackNameDisplay').textContent = state.currentTrackTitle;
+      document.getElementById('trackFormatDisplay').textContent = 'TYPE: SYNTH PCM';
+      document.getElementById('trackRateDisplay').textContent = `SAMPLE RATE: ${sampleRate} Hz`;
+      document.getElementById('trackChannelsDisplay').textContent = 'CHANNELS: STEREO';
+      document.getElementById('timeTotalDisplay').textContent = formatTime(duration);
+
+      // Generate synthetic audio buffer
+      const buffer = audioCtx.createBuffer(numChannels, sampleRate * duration, sampleRate);
+      const chL = buffer.getChannelData(0);
+      const chR = buffer.getChannelData(1);
+
+      for (let i = 0; i < buffer.length; i++) {
+        const t = i / sampleRate;
+
+        if (type === 'trailer') {
+          // Epic cinematic chords + low braam hit + strings
+          const braam = Math.sin(2 * Math.PI * 45 * t) * Math.exp(-(t % 4) * 1.5) * 0.45;
+          const chordL = Math.sin(2 * Math.PI * 220 * t) * 0.15 + Math.sin(2 * Math.PI * 330 * t) * 0.1;
+          const chordR = Math.sin(2 * Math.PI * 261.6 * t) * 0.15 + Math.sin(2 * Math.PI * 392 * t) * 0.1;
+          const ping = (t > 4) ? Math.sin(2 * Math.PI * 880 * t) * Math.exp(-(t % 2) * 4) * 0.2 : 0;
+          
+          chL[i] = braam + chordL + ping * 0.7;
+          chR[i] = braam + chordR + ping * 0.3;
+        } else if (type === 'bass') {
+          // Punchy 55Hz kick drums + sub drop
+          const kickTrigger = (t % 1.25);
+          const kick = Math.sin(2 * Math.PI * (60 - kickTrigger * 30) * kickTrigger) * Math.exp(-kickTrigger * 7) * 0.6;
+          const subRumble = Math.sin(2 * Math.PI * 35 * t) * 0.25;
+          chL[i] = kick + subRumble;
+          chR[i] = kick + subRumble;
+        } else {
+          // Spatial orbit pan
+          const panAngle = t * 1.8;
+          const panL = (Math.cos(panAngle) + 1) / 2;
+          const panR = (Math.sin(panAngle) + 1) / 2;
+          const tone = Math.sin(2 * Math.PI * 440 * t) * 0.25 + Math.sin(2 * Math.PI * 880 * t) * 0.1;
+          chL[i] = tone * panL;
+          chR[i] = tone * panR;
+        }
+      }
+
+      state.audioBuffer = buffer;
+      state.mediaPauseOffset = 0;
+      drawWaveform(buffer);
+      playMediaTrack();
+    }
+
+    /* -------------------------------------------------------------
+       SURROUND MATRIX UPMIXING DSP ROUTING
+       ------------------------------------------------------------- */
+    function playMediaTrack() {
+      if (!state.audioBuffer) {
+        generateBundledDemoTrack('trailer');
+        return;
+      }
+      initAudioContext();
+      stopAllActiveAudio(); // Stop single tones if playing
+
+      // Disconnect prior source node
+      if (state.audioSourceNode) {
+        try { state.audioSourceNode.stop(); state.audioSourceNode.disconnect(); } catch(e){}
+      }
+
+      const bufferSource = audioCtx.createBufferSource();
+      bufferSource.buffer = state.audioBuffer;
+      bufferSource.loop = state.isLoopingMedia;
+
+      // Update Channel Gains based on mutes and config
+      updateChannelGainsAndMutes();
+
+      const numChannels = state.audioBuffer.numberOfChannels;
+
+      if (state.dspUpmix) {
+        // --- MULTI-CHANNEL SURROUND MATRIX UPMIXER ---
+        // 1. Split stereo into Left & Right
+        const splitter = audioCtx.createChannelSplitter(2);
+        bufferSource.connect(splitter);
+
+        // Front Left & Front Right: direct stereo
+        splitter.connect(dspNodes.fl.gain, 0);
+        splitter.connect(dspNodes.fr.gain, (numChannels > 1 ? 1 : 0));
+
+        // Center Stem: Mid-channel extraction (L + R) filtered for speech clarity (300Hz - 3.5kHz)
+        const centerSum = audioCtx.createGain();
+        centerSum.gain.value = 0.5;
+        splitter.connect(centerSum, 0);
+        if (numChannels > 1) splitter.connect(centerSum, 1);
+
+        const centerFilter = audioCtx.createBiquadFilter();
+        centerFilter.type = 'bandpass';
+        centerFilter.frequency.value = 1400; // Human vocal formant center
+        centerFilter.Q.value = 0.7;
+        centerSum.connect(centerFilter);
+        centerFilter.connect(dspNodes.c.gain);
+
+        // Subwoofer (LFE) Stem: (L + R) with steep Low-Pass filter at crossover frequency
+        const subSum = audioCtx.createGain();
+        subSum.gain.value = 0.6;
+        splitter.connect(subSum, 0);
+        if (numChannels > 1) splitter.connect(subSum, 1);
+
+        const subLPF = audioCtx.createBiquadFilter();
+        subLPF.type = 'lowpass';
+        subLPF.frequency.value = state.crossoverCutoff;
+        subLPF.Q.value = 1.0;
+        subSum.connect(subLPF);
+        subLPF.connect(dspNodes.sub.gain);
+
+        // Surrounds (SL, SR): Ambient phase difference extraction (L - R) with Haas delay (15-20ms)
+        const inverter = audioCtx.createGain();
+        inverter.gain.value = -1.0;
+        if (numChannels > 1) splitter.connect(inverter, 1);
+
+        const surroundDiff = audioCtx.createGain();
+        surroundDiff.gain.value = 0.55;
+        splitter.connect(surroundDiff, 0);
+        inverter.connect(surroundDiff);
+
+        // Decorrelate surrounds with slight bandpass and delay
+        const surroundFilter = audioCtx.createBiquadFilter();
+        surroundFilter.type = 'bandpass';
+        surroundFilter.frequency.value = 2200;
+        surroundFilter.Q.value = 0.6;
+        surroundDiff.connect(surroundFilter);
+
+        surroundFilter.connect(dspNodes.sl.gain);
+        surroundFilter.connect(dspNodes.sr.gain);
+
+      } else {
+        // --- DIRECT STEREO MODE ---
+        // Only route to Left and Right channels directly
+        const splitter = audioCtx.createChannelSplitter(2);
+        bufferSource.connect(splitter);
+        splitter.connect(dspNodes.fl.gain, 0);
+        splitter.connect(dspNodes.fr.gain, (numChannels > 1 ? 1 : 0));
+      }
+
+      const offset = state.mediaPauseOffset % state.audioBuffer.duration;
+      bufferSource.start(0, offset);
+      state.mediaStartTime = audioCtx.currentTime - offset;
+      state.audioSourceNode = bufferSource;
+      state.isPlayingMedia = true;
+
+      // Update buttons
+      document.getElementById('mediaPlayIcon').className = 'ph-bold ph-pause text-lg';
+      document.getElementById('activeSignalLabel').textContent = 'MEDIA PLAYBACK (ACTIVE)';
+      document.getElementById('visualizerPulsingIcon').classList.add('text-neon-cyan', 'animate-spin');
+
+      bufferSource.onended = () => {
+        if (!state.isLoopingMedia && state.isPlayingMedia) {
+          stopMediaPlayback();
+        }
+      };
+    }
+
+    function pauseMediaPlayback() {
+      if (state.audioSourceNode && state.isPlayingMedia) {
+        state.mediaPauseOffset = (audioCtx.currentTime - state.mediaStartTime) % state.audioBuffer.duration;
+        try { state.audioSourceNode.stop(); } catch(e){}
+        state.isPlayingMedia = false;
+        document.getElementById('mediaPlayIcon').className = 'ph-bold ph-play text-lg';
+        document.getElementById('activeSignalLabel').textContent = 'MEDIA PAUSED';
+        document.getElementById('visualizerPulsingIcon').classList.remove('animate-spin');
+      }
+    }
+
+    function stopMediaPlayback() {
+      if (state.audioSourceNode) {
+        try { state.audioSourceNode.stop(); state.audioSourceNode.disconnect(); } catch(e){}
+        state.audioSourceNode = null;
+      }
+      state.isPlayingMedia = false;
+      state.mediaPauseOffset = 0;
+      document.getElementById('mediaPlayIcon').className = 'ph-bold ph-play text-lg';
+      document.getElementById('timeCurrentDisplay').textContent = '00:00';
+      document.getElementById('scrubberLine').style.left = '0%';
+      document.getElementById('activeSignalLabel').textContent = 'IDLE / SILENT';
+      document.getElementById('visualizerPulsingIcon').classList.remove('animate-spin');
+    }
+
+    // Waveform Drawing & Scrubbing
+    function drawWaveform(buffer) {
+      const canvas = document.getElementById('waveformCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.parentElement.clientWidth;
+      const h = canvas.height = canvas.parentElement.clientHeight;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const data = buffer.getChannelData(0);
+      const step = Math.ceil(data.length / w);
+      const amp = h / 2;
+
+      // Draw Center Baseline
+      ctx.strokeStyle = '#1e2638';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, amp);
+      ctx.lineTo(w, amp);
+      ctx.stroke();
+
+      // Draw Waveform Bars
+      ctx.fillStyle = '#00f0ff';
+      for (let i = 0; i < w; i++) {
+        let min = 1.0;
+        let max = -1.0;
+        for (let j = 0; j < step; j++) {
+          const datum = data[(i * step) + j];
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
+        const barHeight = Math.max(2, (max - min) * amp * 0.85);
+        ctx.fillRect(i, amp - barHeight / 2, 1.5, barHeight);
+      }
+      document.getElementById('scrubberLine').classList.remove('hidden');
+    }
+
+    // Scrubber click event
+    const waveformContainer = document.getElementById('waveformContainer');
+    waveformContainer.addEventListener('click', (e) => {
+      if (!state.audioBuffer) return;
+      const rect = waveformContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percent = Math.max(0, Math.min(1, clickX / rect.width));
+      const newTime = percent * state.audioBuffer.duration;
+
+      state.mediaPauseOffset = newTime;
+      if (state.isPlayingMedia) {
+        playMediaTrack();
+      } else {
+        document.getElementById('timeCurrentDisplay').textContent = formatTime(newTime);
+        document.getElementById('scrubberLine').style.left = `${percent * 100}%`;
+      }
+    });
+
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '00:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    /* -------------------------------------------------------------
+       CONTINUOUS VU METERS, FFT SPECTRUM & SOUNDSTAGE WAVES
+       ------------------------------------------------------------- */
+    function startContinuousVisualizers() {
+      const fftCanvas = document.getElementById('liveFftCanvas');
+      const fftCtx = fftCanvas ? fftCanvas.getContext('2d') : null;
+      const freqData = new Uint8Array(64);
+      const channelData = new Uint8Array(16);
+
+      function renderLoop() {
+        // 1. Update Media Progress & Scrubber
+        if (state.isPlayingMedia && state.audioBuffer) {
+          const currentPos = (audioCtx.currentTime - state.mediaStartTime) % state.audioBuffer.duration;
+          document.getElementById('timeCurrentDisplay').textContent = formatTime(currentPos);
+          const progressPercent = (currentPos / state.audioBuffer.duration) * 100;
+          document.getElementById('scrubberLine').style.left = `${progressPercent}%`;
+        }
+
+        // 2. Render FFT Spectrum
+        if (fftCanvas && fftCtx && masterAnalyzer) {
+          fftCanvas.width = fftCanvas.parentElement.clientWidth;
+          fftCanvas.height = fftCanvas.parentElement.clientHeight;
+          masterAnalyzer.getByteFrequencyData(freqData);
+
+          fftCtx.clearRect(0, 0, fftCanvas.width, fftCanvas.height);
+          const barWidth = (fftCanvas.width / freqData.length) * 1.8;
+          let x = 0;
+
+          for (let i = 0; i < freqData.length; i++) {
+            const barHeight = (freqData[i] / 255) * fftCanvas.height;
+            // Gradient fill
+            const grad = fftCtx.createLinearGradient(0, fftCanvas.height, 0, 0);
+            grad.addColorStop(0, '#00f0ff');
+            grad.addColorStop(0.7, '#10b981');
+            grad.addColorStop(1, '#f59e0b');
+
+            fftCtx.fillStyle = grad;
+            fftCtx.fillRect(x, fftCanvas.height - barHeight, barWidth - 1, barHeight);
+            x += barWidth;
+          }
+        }
+
+        // 3. Render Per-Channel Real-time VU Levels & Room Acoustic Ripples
+        const activeChannels = CHANNEL_SPECS[state.currentConfig].channels;
+
+        Object.keys(ALL_SPEAKERS).forEach(id => {
+          const dsp = dspNodes[id];
+          const isActive = activeChannels.includes(id);
+          let level = 0;
+
+          if (dsp && isActive && !state.speakers[id].mute) {
+            dsp.analyzer.getByteFrequencyData(channelData);
+            let sum = 0;
+            for (let k = 0; k < channelData.length; k++) sum += channelData[k];
+            level = sum / channelData.length; // 0 - 255
+          }
+
+          // Update strip VU bars
+          const vuElem = document.getElementById(`vu-${id}`);
+          if (vuElem) {
+            const segs = vuElem.querySelectorAll('.vu-seg');
+            const activeCount = Math.round((level / 255) * segs.length);
+            segs.forEach((seg, idx) => {
+              seg.classList.remove('bg-emerald-400', 'bg-amber-400', 'bg-rose-500');
+              if (idx < activeCount) {
+                if (idx < 5) seg.classList.add('bg-emerald-400');
+                else if (idx < 7) seg.classList.add('bg-amber-400');
+                else seg.classList.add('bg-rose-500');
+              } else {
+                seg.classList.add('bg-panel-700');
+              }
+            });
+          }
+
+          // Soundstage speaker pulse & ripple on active audio energy
+          const spkNode = document.getElementById(`spk-${id}`);
+          if (spkNode && isActive) {
+            const ripple = spkNode.querySelector('.sound-wave-anchor');
+            const box = spkNode.querySelector('.spk-box');
+            if (level > 24) {
+              if (ripple) ripple.classList.remove('hidden');
+              if (box) {
+                if (id === 'sub') box.classList.add('border-amber-400');
+                else box.classList.add('border-cyan-400');
+              }
+            } else if (!state.activeTestSpeaker) {
+              if (ripple) ripple.classList.add('hidden');
+              if (box) {
+                box.classList.remove('border-amber-400', 'border-cyan-400');
+              }
+            }
+          }
+        });
+
+        vuAnimFrameId = requestAnimationFrame(renderLoop);
+      }
+      vuAnimFrameId = requestAnimationFrame(renderLoop);
+    }
+
+    /* -------------------------------------------------------------
+       CALIBRATION TONE GENERATOR
+       ------------------------------------------------------------- */
+    function stopAllActiveAudio() {
+      activeOscillators.forEach(node => {
+        try {
+          if (node.stop) node.stop();
+          if (node.disconnect) node.disconnect();
+        } catch(e) {}
+      });
+      activeOscillators = [];
+
+      document.querySelectorAll('.sound-wave-anchor').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.speaker-node .spk-box').forEach(el => {
+        el.classList.remove('border-neon-cyan', 'shadow-glow-cyan', 'border-amber-400', 'shadow-glow-amber');
+      });
+      if (!state.isPlayingMedia) {
+        document.getElementById('activeSignalLabel').textContent = 'IDLE / SILENT';
+        document.getElementById('visualizerPulsingIcon').classList.remove('text-neon-cyan');
+      }
+      state.activeTestSpeaker = null;
+    }
+
+    function playSpeakerTestTone(speakerId, duration = 1.5) {
+      initAudioContext();
+      if (state.isPlayingMedia) pauseMediaPlayback();
+      stopAllActiveAudio();
+
+      const spkConfig = state.speakers[speakerId];
+      if (!spkConfig) return;
+
+      const activeChannels = CHANNEL_SPECS[state.currentConfig].channels;
+      if (!activeChannels.includes(speakerId) || spkConfig.mute) return;
+
+      state.activeTestSpeaker = speakerId;
+      document.getElementById('activeSignalLabel').textContent = `${spkConfig.fullName} (${spkConfig.label}) [TEST TONE]`;
+      document.getElementById('visualizerPulsingIcon').classList.add('text-neon-cyan');
+
+      const now = audioCtx.currentTime;
+      const dspTarget = dspNodes[speakerId];
+      if (!dspTarget) return;
+
+      if (speakerId === 'sub') {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(52, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + duration);
+
+        const subLPF = audioCtx.createBiquadFilter();
+        subLPF.type = 'lowpass';
+        subLPF.frequency.setValueAtTime(state.crossoverCutoff, now);
+
+        osc.connect(subLPF);
+        subLPF.connect(dspTarget.gain);
+        osc.start(now);
+        osc.stop(now + duration);
+        activeOscillators.push(osc);
+      } else {
+        if (state.selectedToneType === 'pink') {
+          const noise = audioCtx.createBufferSource();
+          noise.buffer = noiseBufferCache;
+          noise.loop = true;
+
+          const bp = audioCtx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(spkConfig.freq, now);
+          bp.Q.setValueAtTime(1.2, now);
+
+          noise.connect(bp);
+          bp.connect(dspTarget.gain);
+          noise.start(now);
+          noise.stop(now + duration);
+          activeOscillators.push(noise);
+        } else if (state.selectedToneType === '1khz') {
+          const osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1000, now);
+          osc.connect(dspTarget.gain);
+          osc.start(now);
+          osc.stop(now + duration);
+          activeOscillators.push(osc);
+        } else {
+          const osc = audioCtx.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(800, now);
+          osc.frequency.exponentialRampToValueAtTime(180, now + 0.2);
+          osc.connect(dspTarget.gain);
+          osc.start(now);
+          osc.stop(now + 0.25);
+          activeOscillators.push(osc);
+        }
+      }
+
+      setTimeout(() => {
+        if (state.activeTestSpeaker === speakerId) {
+          state.activeTestSpeaker = null;
+          if (!state.isPlayingMedia) document.getElementById('activeSignalLabel').textContent = 'IDLE / SILENT';
+        }
+      }, duration * 1000);
+    }
+
+    function toggleSequentialTest() {
+      if (state.isPlayingSequence) {
+        clearInterval(state.sequenceInterval);
+        state.isPlayingSequence = false;
+        stopAllActiveAudio();
+        document.getElementById('seqBtnText').textContent = 'Cycle All';
+        document.getElementById('seqTestBtn').classList.remove('from-rose-500', 'to-red-600');
+        document.getElementById('seqTestBtn').classList.add('from-cyan-500', 'to-blue-600');
+        return;
+      }
+
+      initAudioContext();
+      if (state.isPlayingMedia) pauseMediaPlayback();
+      state.isPlayingSequence = true;
+      document.getElementById('seqBtnText').textContent = 'Stop Cycle';
+      document.getElementById('seqTestBtn').classList.remove('from-cyan-500', 'to-blue-600');
+      document.getElementById('seqTestBtn').classList.add('from-rose-500', 'to-red-600');
+
+      const activeChannels = CHANNEL_SPECS[state.currentConfig].channels;
+      let currentIndex = 0;
+
+      playSpeakerTestTone(activeChannels[currentIndex], 1.3);
+      currentIndex++;
+
+      state.sequenceInterval = setInterval(() => {
+        if (currentIndex >= activeChannels.length) currentIndex = 0;
+        playSpeakerTestTone(activeChannels[currentIndex], 1.3);
+        currentIndex++;
+      }, 1600);
+    }
+
+    /* -------------------------------------------------------------
+       UI BUILDER: SPEAKER STRIPS & VISUALIZER
+       ------------------------------------------------------------- */
+    function renderSpeakerStrips() {
+      const container = document.getElementById('speakerStripsContainer');
+      container.innerHTML = '';
+      const activeChannels = CHANNEL_SPECS[state.currentConfig].channels;
+
+      Object.keys(ALL_SPEAKERS).forEach(spkId => {
+        const spk = state.speakers[spkId];
+        const isActive = activeChannels.includes(spkId);
+
+        const strip = document.createElement('div');
+        strip.className = `p-3 rounded-xl border transition duration-200 ${
+          isActive 
+            ? 'bg-panel-800/80 border-panel-600 hover:border-panel-500' 
+            : 'bg-panel-900/40 border-panel-800 opacity-30 pointer-events-none'
+        }`;
+        strip.id = `strip-${spkId}`;
+
+        const distVal = state.distanceUnit === 'meters' ? spk.defaultDist : (spk.defaultDist * 3.28084).toFixed(1);
+        const distUnitText = state.distanceUnit === 'meters' ? 'm' : 'ft';
+        const delayMs = (spk.defaultDist / 343 * 1000).toFixed(1);
+
+        strip.innerHTML = `
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg ${spkId === 'sub' ? 'bg-amber-500/20 text-neon-amber border border-amber-500/30' : 'bg-cyan-500/20 text-neon-cyan border border-cyan-500/30'} flex items-center justify-center font-mono font-bold text-xs">
+                ${spk.label}
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-white flex items-center gap-1.5">
+                  ${spk.fullName}
+                  ${!isActive ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-500 border border-slate-700">DISABLED</span>' : ''}
+                </div>
+                <div class="text-[10px] text-slate-400 font-mono">Delay: <span class="text-cyan-400" id="delay-val-${spkId}">${delayMs} ms</span> (${distVal} ${distUnitText})</div>
+              </div>
+            </div>
+
+            <!-- Dynamic VU Meter -->
+            <div id="vu-${spkId}" class="flex items-center gap-0.5 px-2 py-1 bg-panel-900 rounded-md border border-panel-700/80">
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+              <div class="vu-seg w-1 h-3 bg-panel-700 rounded-sm"></div>
+            </div>
+
+            <!-- Channel Solo, Mute, Test -->
+            <div class="flex items-center gap-1">
+              <button class="spk-test-btn px-2 py-1 rounded bg-panel-700 hover:bg-cyan-500 hover:text-black text-slate-200 text-xs font-mono font-semibold transition" data-spk="${spkId}">
+                PING
+              </button>
+              <button class="spk-mute-btn px-1.5 py-1 rounded ${spk.mute ? 'bg-rose-500 text-white' : 'bg-panel-700 text-slate-300 hover:text-rose-400'} text-xs font-mono transition" data-spk="${spkId}" title="Mute channel">
+                M
+              </button>
+              <button class="spk-solo-btn px-1.5 py-1 rounded ${spk.solo ? 'bg-amber-500 text-black font-bold' : 'bg-panel-700 text-slate-300 hover:text-amber-300'} text-xs font-mono transition" data-spk="${spkId}" title="Solo channel">
+                S
+              </button>
+            </div>
+          </div>
+
+          <!-- Level Trim & Distance Sliders -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center pt-2 border-t border-panel-700/50 text-xs">
+            <div class="sm:col-span-7 flex items-center gap-2">
+              <span class="text-[10px] font-mono text-slate-400 w-8">TRIM</span>
+              <input type="range" class="spk-trim-slider flex-1 h-1.5" min="-12" max="12" step="0.5" value="${spk.trim}" data-spk="${spkId}">
+              <span class="text-[10px] font-mono font-bold text-neon-cyan w-12 text-right" id="trim-val-${spkId}">${spk.trim > 0 ? '+' : ''}${spk.trim.toFixed(1)}dB</span>
+            </div>
+
+            <div class="sm:col-span-5 flex items-center gap-2">
+              <span class="text-[10px] font-mono text-slate-400">DIST</span>
+              <input type="range" class="spk-dist-slider flex-1 h-1.5" min="1.0" max="8.0" step="0.1" value="${spk.defaultDist}" data-spk="${spkId}">
+              <span class="text-[10px] font-mono text-slate-300 w-10 text-right" id="dist-label-${spkId}">${distVal}${distUnitText}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(strip);
+      });
+
+      bindSpeakerStripEvents();
+    }
+
+    function bindSpeakerStripEvents() {
+      document.querySelectorAll('.spk-test-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const spkId = e.currentTarget.getAttribute('data-spk');
+          playSpeakerTestTone(spkId, 1.4);
+        });
+      });
+
+      document.querySelectorAll('.spk-mute-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const spkId = e.currentTarget.getAttribute('data-spk');
+          state.speakers[spkId].mute = !state.speakers[spkId].mute;
+          updateChannelGainsAndMutes();
+          renderSpeakerStrips();
+        });
+      });
+
+      document.querySelectorAll('.spk-solo-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const spkId = e.currentTarget.getAttribute('data-spk');
+          state.speakers[spkId].solo = !state.speakers[spkId].solo;
+          updateChannelGainsAndMutes();
+          renderSpeakerStrips();
+        });
+      });
+
+      document.querySelectorAll('.spk-trim-slider').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const spkId = e.currentTarget.getAttribute('data-spk');
+          const val = parseFloat(e.currentTarget.value);
+          state.speakers[spkId].trim = val;
+          document.getElementById(`trim-val-${spkId}`).textContent = `${val > 0 ? '+' : ''}${val.toFixed(1)}dB`;
+          updateChannelGainsAndMutes();
+        });
+      });
+
+      document.querySelectorAll('.spk-dist-slider').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const spkId = e.currentTarget.getAttribute('data-spk');
+          const meters = parseFloat(e.currentTarget.value);
+          state.speakers[spkId].defaultDist = meters;
+          const delay = (meters / 343 * 1000).toFixed(1);
+          document.getElementById(`delay-val-${spkId}`).textContent = `${delay} ms`;
+
+          const distVal = state.distanceUnit === 'meters' ? meters.toFixed(1) : (meters * 3.28084).toFixed(1);
+          const distUnitText = state.distanceUnit === 'meters' ? 'm' : 'ft';
+          document.getElementById(`dist-label-${spkId}`).textContent = `${distVal}${distUnitText}`;
+          updateChannelGainsAndMutes();
+        });
+      });
+    }
+
+    function updateVisualizerLayout() {
+      const activeChannels = CHANNEL_SPECS[state.currentConfig].channels;
+
+      Object.keys(ALL_SPEAKERS).forEach(spkId => {
+        const node = document.getElementById(`spk-${spkId}`);
+        if (!node) return;
+
+        if (activeChannels.includes(spkId)) {
+          node.classList.remove('opacity-20', 'pointer-events-none');
+          node.classList.add('opacity-100');
+        } else {
+          node.classList.add('opacity-20', 'pointer-events-none');
+          node.classList.remove('opacity-100');
+        }
+      });
+
+      const hasSub = CHANNEL_SPECS[state.currentConfig].sub;
+      const subStatusTag = document.getElementById('crossoverStatusTag');
+      if (hasSub) {
+        subStatusTag.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-neon-amber border border-amber-500/30';
+        subStatusTag.textContent = 'SUB ACTIVE';
+        document.getElementById('crossoverButtonGroup').classList.remove('opacity-30', 'pointer-events-none');
+      } else {
+        subStatusTag.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-panel-700';
+        subStatusTag.textContent = 'NO SUB (FULL RANGE)';
+        document.getElementById('crossoverButtonGroup').classList.add('opacity-30', 'pointer-events-none');
+      }
+
+      const pillsContainer = document.getElementById('channelIndicatorPills');
+      pillsContainer.innerHTML = '';
+      activeChannels.forEach(ch => {
+        const pill = document.createElement('span');
+        pill.className = `px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+          ch === 'sub' 
+            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+            : 'bg-cyan-500/20 text-neon-cyan border border-cyan-500/40'
+        }`;
+        pill.textContent = ch.toUpperCase();
+        pillsContainer.appendChild(pill);
+      });
+
+      document.getElementById('activeLayoutBadge').textContent = CHANNEL_SPECS[state.currentConfig].name;
+      document.getElementById('activeChannelCountBadge').textContent = `(${activeChannels.length} Discrete Channels Active)`;
+
+      updateChannelGainsAndMutes();
+    }
+
+    /* -------------------------------------------------------------
+       ACOUSTIC SWEEP MODAL & ANALYZER
+       ------------------------------------------------------------- */
+    let sweepAnimationId = null;
+    function openSweepModal() {
+      document.getElementById('sweepModal').classList.remove('hidden');
+      document.getElementById('sweepModal').classList.add('flex');
+      drawSweepCurve(false, 0);
+    }
+
+    function closeSweepModal() {
+      document.getElementById('sweepModal').classList.add('hidden');
+      document.getElementById('sweepModal').classList.remove('flex');
+      if (sweepAnimationId) cancelAnimationFrame(sweepAnimationId);
+      stopAllActiveAudio();
+    }
+
+    function drawSweepCurve(isSweeping = false, progress = 0) {
+      const canvas = document.getElementById('sweepCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.parentElement.clientWidth;
+      const h = canvas.height = canvas.parentElement.clientHeight;
+
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.strokeStyle = '#1e2638';
+      ctx.lineWidth = 1;
+      [0.1, 0.25, 0.5, 0.75, 0.9].forEach(frac => {
+        ctx.beginPath();
+        ctx.moveTo(frac * w, 0);
+        ctx.lineTo(frac * w, h);
+        ctx.stroke();
+      });
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#64748b';
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(0, h * 0.45);
+      ctx.lineTo(w, h * 0.45);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 2.5;
+
+      const points = 100;
+      for (let i = 0; i < points; i++) {
+        const x = (i / (points - 1)) * w;
+        let y = h * 0.45 + Math.sin(i * 0.18) * 16 + Math.cos(i * 0.45) * 8 - (i < 20 ? Math.sin(i * 0.3) * 22 : 0);
+        if (isSweeping && (i / points) > progress) y = h * 0.9;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      if (isSweeping) {
+        const curX = progress * w;
+        ctx.beginPath();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        ctx.moveTo(curX, 0);
+        ctx.lineTo(curX, h);
+        ctx.stroke();
+
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(curX, h * 0.45, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function runAcousticSweepAudio() {
+      initAudioContext();
+      stopAllActiveAudio();
+      if (state.isPlayingMedia) pauseMediaPlayback();
+
+      const btn = document.getElementById('startSweepAudioBtn');
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+
+      const duration = 4.5;
+      const now = audioCtx.currentTime;
+
+      const osc = audioCtx.createOscillator();
+      const sweepGain = audioCtx.createGain();
+
+      sweepGain.gain.setValueAtTime(0.01, now);
+      sweepGain.gain.exponentialRampToValueAtTime(0.6 * state.masterVolume, now + 0.1);
+      sweepGain.gain.setValueAtTime(0.6 * state.masterVolume, now + duration - 0.2);
+      sweepGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(20, now);
+      osc.frequency.exponentialRampToValueAtTime(20000, now + duration);
+
+      osc.connect(sweepGain);
+      sweepGain.connect(masterGainNode);
+
+      osc.start(now);
+      osc.stop(now + duration);
+      activeOscillators.push(osc);
+
+      const startTime = performance.now();
+      function updateVisualSweep(currentTime) {
+        const elapsed = (currentTime - startTime) / 1000;
+        const progress = Math.min(1.0, elapsed / duration);
+        const curFreq = Math.round(20 * Math.pow(1000, progress));
+
+        document.getElementById('sweepFreqReadout').textContent = `SWEEPING: ${curFreq} Hz (${Math.round(progress * 100)}%)`;
+        drawSweepCurve(true, progress);
+
+        if (progress < 1.0) {
+          sweepAnimationId = requestAnimationFrame(updateVisualSweep);
+        } else {
+          document.getElementById('sweepFreqReadout').textContent = 'CALIBRATION COMPLETE: EQ CORRECTION READY';
+          btn.disabled = false;
+          btn.classList.remove('opacity-50');
+          drawSweepCurve(false, 1.0);
+        }
+      }
+      sweepAnimationId = requestAnimationFrame(updateVisualSweep);
+    }
+
+    /* -------------------------------------------------------------
+       PRESET PROFILES & EVENTS
+       ------------------------------------------------------------- */
+    const PRESETS = {
+      cinema: { trim: { fl: 0, c: +1.0, fr: 0, sub: +1.5, sl: +0.5, sr: +0.5 }, crossover: 80 },
+      studio: { trim: { fl: 0, c: 0, fr: 0, sub: 0, sl: 0, sr: 0 }, crossover: 80 },
+      bass:   { trim: { fl: 0, c: 0, fr: 0, sub: +4.5, sl: +1.0, sr: +1.0 }, crossover: 100 },
+      dialogue: { trim: { fl: -1.0, c: +3.5, fr: -1.0, sub: -0.5, sl: -1.5, sr: -1.5 }, crossover: 80 },
+      night:  { trim: { fl: -1.0, c: +2.0, fr: -1.0, sub: -4.0, sl: -2.0, sr: -2.0 }, crossover: 60 }
+    };
+
+    function applyPreset(presetKey) {
+      state.activePreset = presetKey;
+      const conf = PRESETS[presetKey];
+      if (!conf) return;
+
+      Object.keys(conf.trim).forEach(spkId => {
+        if (state.speakers[spkId]) {
+          state.speakers[spkId].trim = conf.trim[spkId];
+        }
+      });
+
+      state.crossoverCutoff = conf.crossover;
+      document.getElementById('crossoverFreqDisplay').textContent = `${state.crossoverCutoff} Hz`;
+      document.getElementById('lfeCutoffTag').textContent = state.crossoverCutoff;
+
+      document.querySelectorAll('.crossover-btn').forEach(btn => {
+        const cutoff = parseInt(btn.getAttribute('data-cutoff'));
+        if (cutoff === state.crossoverCutoff) {
+          btn.classList.add('active', 'border-2', 'border-amber-400', 'bg-amber-950/40', 'font-bold', 'text-neon-amber', 'shadow-glow-amber');
+          btn.classList.remove('border-panel-600', 'bg-panel-800', 'text-slate-300');
+        } else {
+          btn.classList.remove('active', 'border-2', 'border-amber-400', 'bg-amber-950/40', 'font-bold', 'text-neon-amber', 'shadow-glow-amber');
+          btn.classList.add('border-panel-600', 'bg-panel-800', 'text-slate-300');
+        }
+      });
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        if (btn.getAttribute('data-preset') === presetKey) {
+          btn.classList.add('active', 'border-2', 'border-emerald-400', 'bg-emerald-950/30', 'text-emerald-300');
+          btn.classList.remove('border-panel-600', 'bg-panel-800', 'text-slate-200');
+        } else {
+          btn.classList.remove('active', 'border-2', 'border-emerald-400', 'bg-emerald-950/30', 'text-emerald-300');
+          btn.classList.add('border-panel-600', 'bg-panel-800', 'text-slate-200');
+        }
+      });
+
+      updateChannelGainsAndMutes();
+      renderSpeakerStrips();
+    }
+
+    /* -------------------------------------------------------------
+       INITIALIZATION & DOM BINDINGS
+       ------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderSpeakerStrips();
+      updateVisualizerLayout();
+
+      // Mode Navigation: Calibration Tones vs Media Player
+      const modeTabTone = document.getElementById('modeTabTone');
+      const modeTabMedia = document.getElementById('modeTabMedia');
+      const mediaPlayerSection = document.getElementById('mediaPlayerSection');
+      const toneControlsStrip = document.getElementById('toneControlsStrip');
+
+      modeTabTone.addEventListener('click', () => {
+        state.mode = 'tone';
+        modeTabTone.classList.add('text-neon-cyan', 'bg-panel-800', 'shadow-sm');
+        modeTabTone.classList.remove('text-slate-400');
+        modeTabMedia.classList.remove('text-neon-cyan', 'bg-panel-800', 'shadow-sm');
+        modeTabMedia.classList.add('text-slate-400');
+
+        mediaPlayerSection.classList.add('hidden');
+        toneControlsStrip.classList.remove('hidden');
+      });
+
+      modeTabMedia.addEventListener('click', () => {
+        state.mode = 'media';
+        modeTabMedia.classList.add('text-neon-cyan', 'bg-panel-800', 'shadow-sm');
+        modeTabMedia.classList.remove('text-slate-400');
+        modeTabTone.classList.remove('text-neon-cyan', 'bg-panel-800', 'shadow-sm');
+        modeTabTone.classList.add('text-slate-400');
+
+        mediaPlayerSection.classList.remove('hidden');
+        toneControlsStrip.classList.add('hidden');
+        initAudioContext();
+      });
+
+      // Media Player Controls
+      const playBtn = document.getElementById('mediaPlayBtn');
+      const stopBtn = document.getElementById('mediaStopBtn');
+      const loopBtn = document.getElementById('mediaLoopBtn');
+
+      playBtn.addEventListener('click', () => {
+        if (state.isPlayingMedia) {
+          pauseMediaPlayback();
+        } else {
+          playMediaTrack();
+        }
+      });
+
+      stopBtn.addEventListener('click', stopMediaPlayback);
+
+      loopBtn.addEventListener('click', () => {
+        state.isLoopingMedia = !state.isLoopingMedia;
+        document.getElementById('loopStatusText').textContent = state.isLoopingMedia ? 'ON' : 'OFF';
+        loopBtn.classList.toggle('text-neon-cyan', state.isLoopingMedia);
+        if (state.audioSourceNode) state.audioSourceNode.loop = state.isLoopingMedia;
+      });
+
+      // DSP Upmix vs Direct Stereo Toggle
+      const btnDspUpmix = document.getElementById('btnDspUpmix');
+      const btnDspDirect = document.getElementById('btnDspDirect');
+      const dspModeBadge = document.getElementById('dspModeBadge');
+
+      btnDspUpmix.addEventListener('click', () => {
+        state.dspUpmix = true;
+        btnDspUpmix.className = 'px-3 py-1 rounded-md text-xs font-mono font-semibold text-black bg-neon-cyan transition';
+        btnDspDirect.className = 'px-3 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-white transition';
+        dspModeBadge.textContent = 'MATRIX UPMIX ACTIVE';
+        dspModeBadge.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-neon-emerald border border-emerald-500/30 font-mono';
+        if (state.isPlayingMedia) playMediaTrack();
+      });
+
+      btnDspDirect.addEventListener('click', () => {
+        state.dspUpmix = false;
+        btnDspDirect.className = 'px-3 py-1 rounded-md text-xs font-mono font-semibold text-black bg-neon-cyan transition';
+        btnDspUpmix.className = 'px-3 py-1 rounded-md text-xs font-mono font-medium text-slate-400 hover:text-white transition';
+        dspModeBadge.textContent = 'DIRECT STEREO (L/R ONLY)';
+        dspModeBadge.className = 'text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-neon-amber border border-amber-500/30 font-mono';
+        if (state.isPlayingMedia) playMediaTrack();
+      });
+
+      // Channel Config Selection (2.0 to 5.1)
+      document.querySelectorAll('.config-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cfg = e.currentTarget.getAttribute('data-config');
+          state.currentConfig = cfg;
+
+          document.querySelectorAll('.config-btn').forEach(b => {
+            b.classList.remove('active', 'border-2', 'border-neon-cyan', 'bg-cyan-950/40', 'text-neon-cyan', 'shadow-glow-cyan');
+            b.classList.add('border-panel-600', 'bg-panel-800');
+          });
+          e.currentTarget.classList.add('active', 'border-2', 'border-neon-cyan', 'bg-cyan-950/40', 'text-neon-cyan', 'shadow-glow-cyan');
+          e.currentTarget.classList.remove('border-panel-600', 'bg-panel-800');
+
+          if (state.isPlayingSequence) toggleSequentialTest();
+          stopAllActiveAudio();
+          updateVisualizerLayout();
+          renderSpeakerStrips();
+
+          // If uploaded media is playing, re-route stems dynamically
+          if (state.isPlayingMedia) playMediaTrack();
+        });
+      });
+
+      // Master Volume
+      const volSlider = document.getElementById('masterVolumeSlider');
+      volSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value) / 100;
+        state.masterVolume = val;
+        document.getElementById('masterVolDisplay').textContent = `${Math.round(val * 100)}%`;
+        if (masterGainNode && audioCtx && !state.masterMute) {
+          masterGainNode.gain.setValueAtTime(val, audioCtx.currentTime);
+        }
+      });
+
+      // Master Mute
+      const muteBtn = document.getElementById('masterMuteBtn');
+      muteBtn.addEventListener('click', () => {
+        state.masterMute = !state.masterMute;
+        const icon = document.getElementById('masterMuteIcon');
+        if (state.masterMute) {
+          icon.className = 'ph-bold ph-speaker-simple-slash text-rose-400 text-base';
+          if (masterGainNode && audioCtx) masterGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        } else {
+          icon.className = 'ph-bold ph-speaker-high text-base text-slate-300';
+          if (masterGainNode && audioCtx) masterGainNode.gain.setValueAtTime(state.masterVolume, audioCtx.currentTime);
+        }
+      });
+
+      // Tone sequencer & stop
+      document.getElementById('seqTestBtn').addEventListener('click', toggleSequentialTest);
+      document.getElementById('stopAllAudioBtn').addEventListener('click', () => {
+        if (state.isPlayingSequence) toggleSequentialTest();
+        stopAllActiveAudio();
+      });
+
+      // Room Visualizer speaker node clicks
+      document.querySelectorAll('.speaker-node').forEach(node => {
+        node.addEventListener('click', (e) => {
+          const spkId = e.currentTarget.getAttribute('data-spk');
+          playSpeakerTestTone(spkId, 1.4);
+        });
+      });
+
+      // Tone selector
+      document.querySelectorAll('.tone-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.tone-btn').forEach(b => {
+            b.classList.remove('active', 'text-black', 'bg-neon-cyan');
+            b.classList.add('text-slate-400');
+          });
+          e.currentTarget.classList.add('active', 'text-black', 'bg-neon-cyan');
+          e.currentTarget.classList.remove('text-slate-400');
+          state.selectedToneType = e.currentTarget.getAttribute('data-tone');
+        });
+      });
+
+      // Unit Selector
+      document.querySelectorAll('.unit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.unit-btn').forEach(b => {
+            b.classList.remove('active', 'text-neon-cyan', 'bg-panel-700', 'font-semibold');
+            b.classList.add('text-slate-400');
+          });
+          e.currentTarget.classList.add('active', 'text-neon-cyan', 'bg-panel-700', 'font-semibold');
+          e.currentTarget.classList.remove('text-slate-400');
+          state.distanceUnit = e.currentTarget.getAttribute('data-unit');
+          renderSpeakerStrips();
+        });
+      });
+
+      // Crossover Selector
+      document.querySelectorAll('.crossover-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cutoff = parseInt(e.currentTarget.getAttribute('data-cutoff'));
+          state.crossoverCutoff = cutoff;
+          document.getElementById('crossoverFreqDisplay').textContent = `${cutoff} Hz`;
+          document.getElementById('lfeCutoffTag').textContent = cutoff;
+
+          document.querySelectorAll('.crossover-btn').forEach(b => {
+            b.classList.remove('active', 'border-2', 'border-amber-400', 'bg-amber-950/40', 'font-bold', 'text-neon-amber', 'shadow-glow-amber');
+            b.classList.add('border-panel-600', 'bg-panel-800', 'text-slate-300');
+          });
+          e.currentTarget.classList.add('active', 'border-2', 'border-amber-400', 'bg-amber-950/40', 'font-bold', 'text-neon-amber', 'shadow-glow-amber');
+          e.currentTarget.classList.remove('border-panel-600', 'bg-panel-800', 'text-slate-300');
+
+          // If media is running, re-apply upmixing filter cutoff
+          if (state.isPlayingMedia) playMediaTrack();
+        });
+      });
+
+      // Presets
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const presetKey = e.currentTarget.getAttribute('data-preset');
+          applyPreset(presetKey);
+        });
+      });
+
+      // Profile Export
+      document.getElementById('exportProfileBtn').addEventListener('click', () => {
+        const exportData = {
+          device: 'AcoustiQ AVR-9000 PRO',
+          topology: state.currentConfig,
+          crossoverFrequency: state.crossoverCutoff,
+          unit: state.distanceUnit,
+          speakers: state.speakers,
+          activeTrack: state.currentTrackTitle,
+          exportedAt: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `acoustiq_config_${state.currentConfig}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Reset
+      document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
+        state.speakers = JSON.parse(JSON.stringify(ALL_SPEAKERS));
+        applyPreset('cinema');
+      });
+
+      // Sweep Modal
+      document.getElementById('openSweepModalBtn').addEventListener('click', openSweepModal);
+      document.getElementById('closeSweepModalBtn').addEventListener('click', closeSweepModal);
+      document.getElementById('startSweepAudioBtn').addEventListener('click', runAcousticSweepAudio);
+    });
+  </script>
+</body>
+</html>
